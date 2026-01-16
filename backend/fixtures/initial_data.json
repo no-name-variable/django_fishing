@@ -1,0 +1,492 @@
+[
+  {
+    "model": "fishing.location",
+    "pk": 1,
+    "fields": {
+      "name": "Озеро Тихое",
+      "description": "Небольшое озеро для начинающих рыбаков. Здесь водится мелкая рыба.",
+      "max_depth": 5.0,
+      "required_level": 1,
+      "is_active": true
+    }
+  },
+  {
+    "model": "fishing.location",
+    "pk": 2,
+    "fields": {
+      "name": "Река Быстрая",
+      "description": "Горная река с сильным течением. Здесь можно поймать форель.",
+      "max_depth": 8.0,
+      "required_level": 5,
+      "is_active": true
+    }
+  },
+  {
+    "model": "fishing.location",
+    "pk": 3,
+    "fields": {
+      "name": "Глубокое озеро",
+      "description": "Большое озеро с разнообразной рыбой. Водятся трофейные экземпляры.",
+      "max_depth": 15.0,
+      "required_level": 10,
+      "is_active": true
+    }
+  },
+  {
+    "model": "fishing.fish",
+    "pk": 1,
+    "fields": {
+      "name": "Карась",
+      "description": "Обычная рыба, которая водится почти везде.",
+      "min_weight": 0.1,
+      "max_weight": 1.5,
+      "rarity": "common",
+      "base_price": 50,
+      "strength": 20,
+      "stamina": 30,
+      "aggressiveness": 15,
+      "depth_min": 1.0,
+      "depth_max": 4.0,
+      "active_from": 6,
+      "active_until": 22,
+      "locations": [1, 2, 3]
+    }
+  },
+  {
+    "model": "fishing.fish",
+    "pk": 2,
+    "fields": {
+      "name": "Окунь",
+      "description": "Хищная рыба с полосатым окрасом.",
+      "min_weight": 0.2,
+      "max_weight": 2.0,
+      "rarity": "common",
+      "base_price": 60,
+      "strength": 35,
+      "stamina": 40,
+      "aggressiveness": 45,
+      "depth_min": 2.0,
+      "depth_max": 6.0,
+      "active_from": 5,
+      "active_until": 21,
+      "locations": [1, 2, 3]
+    }
+  },
+  {
+    "model": "fishing.fish",
+    "pk": 3,
+    "fields": {
+      "name": "Лещ",
+      "description": "Крупная рыба семейства карповых.",
+      "min_weight": 0.5,
+      "max_weight": 4.0,
+      "rarity": "uncommon",
+      "base_price": 80,
+      "strength": 40,
+      "stamina": 50,
+      "aggressiveness": 25,
+      "depth_min": 3.0,
+      "depth_max": 8.0,
+      "active_from": 4,
+      "active_until": 23,
+      "locations": [1, 3]
+    }
+  },
+  {
+    "model": "fishing.fish",
+    "pk": 4,
+    "fields": {
+      "name": "Щука",
+      "description": "Крупный хищник с острыми зубами. Агрессивно сопротивляется.",
+      "min_weight": 1.0,
+      "max_weight": 8.0,
+      "rarity": "rare",
+      "base_price": 120,
+      "strength": 70,
+      "stamina": 60,
+      "aggressiveness": 80,
+      "depth_min": 2.0,
+      "depth_max": 10.0,
+      "active_from": 6,
+      "active_until": 20,
+      "locations": [2, 3]
+    }
+  },
+  {
+    "model": "fishing.fish",
+    "pk": 5,
+    "fields": {
+      "name": "Карп",
+      "description": "Крупная и сильная рыба. Любимец спортивных рыбаков.",
+      "min_weight": 2.0,
+      "max_weight": 15.0,
+      "rarity": "rare",
+      "base_price": 100,
+      "strength": 80,
+      "stamina": 70,
+      "aggressiveness": 40,
+      "depth_min": 3.0,
+      "depth_max": 12.0,
+      "active_from": 5,
+      "active_until": 22,
+      "locations": [3]
+    }
+  },
+  {
+    "model": "fishing.fish",
+    "pk": 6,
+    "fields": {
+      "name": "Сом",
+      "description": "Огромная рыба, обитающая на глубине. Требует крепкие снасти.",
+      "min_weight": 5.0,
+      "max_weight": 50.0,
+      "rarity": "epic",
+      "base_price": 150,
+      "strength": 95,
+      "stamina": 85,
+      "aggressiveness": 60,
+      "depth_min": 8.0,
+      "depth_max": 15.0,
+      "active_from": 20,
+      "active_until": 6,
+      "locations": [3]
+    }
+  },
+  {
+    "model": "fishing.fish",
+    "pk": 7,
+    "fields": {
+      "name": "Форель",
+      "description": "Красивая и быстрая рыба. Водится в чистых горных реках.",
+      "min_weight": 0.5,
+      "max_weight": 5.0,
+      "rarity": "rare",
+      "base_price": 200,
+      "strength": 60,
+      "stamina": 75,
+      "aggressiveness": 70,
+      "depth_min": 1.0,
+      "depth_max": 5.0,
+      "active_from": 5,
+      "active_until": 19,
+      "locations": [2]
+    }
+  },
+  {
+    "model": "fishing.fish",
+    "pk": 8,
+    "fields": {
+      "name": "Золотой карп",
+      "description": "Легендарная рыба! Встречается крайне редко.",
+      "min_weight": 3.0,
+      "max_weight": 20.0,
+      "rarity": "legendary",
+      "base_price": 1000,
+      "strength": 90,
+      "stamina": 90,
+      "aggressiveness": 50,
+      "depth_min": 5.0,
+      "depth_max": 15.0,
+      "active_from": 0,
+      "active_until": 24,
+      "locations": [3]
+    }
+  },
+  {
+    "model": "equipment.rod",
+    "pk": 1,
+    "fields": {
+      "name": "Начальная удочка",
+      "description": "Простая удочка для новичков.",
+      "tier": "basic",
+      "power": 20,
+      "sensitivity": 30,
+      "max_line_weight": 5.0,
+      "cast_distance_bonus": 0,
+      "price": 100,
+      "required_level": 1,
+      "durability": 100
+    }
+  },
+  {
+    "model": "equipment.rod",
+    "pk": 2,
+    "fields": {
+      "name": "Спиннинг Охотник",
+      "description": "Надёжное удилище для любителей.",
+      "tier": "amateur",
+      "power": 40,
+      "sensitivity": 50,
+      "max_line_weight": 10.0,
+      "cast_distance_bonus": 15,
+      "price": 500,
+      "required_level": 5,
+      "durability": 100
+    }
+  },
+  {
+    "model": "equipment.rod",
+    "pk": 3,
+    "fields": {
+      "name": "Профессионал Pro",
+      "description": "Профессиональное удилище высокого класса.",
+      "tier": "professional",
+      "power": 70,
+      "sensitivity": 75,
+      "max_line_weight": 20.0,
+      "cast_distance_bonus": 30,
+      "price": 2000,
+      "required_level": 10,
+      "durability": 100
+    }
+  },
+  {
+    "model": "equipment.reel",
+    "pk": 1,
+    "fields": {
+      "name": "Простая катушка",
+      "description": "Базовая катушка для начинающих.",
+      "tier": "basic",
+      "gear_ratio": 4.5,
+      "drag_power": 3.0,
+      "line_capacity": 100,
+      "retrieve_speed": 30,
+      "price": 80,
+      "required_level": 1,
+      "durability": 100
+    }
+  },
+  {
+    "model": "equipment.reel",
+    "pk": 2,
+    "fields": {
+      "name": "Катушка Турбо",
+      "description": "Быстрая катушка с хорошим фрикционом.",
+      "tier": "amateur",
+      "gear_ratio": 5.2,
+      "drag_power": 6.0,
+      "line_capacity": 150,
+      "retrieve_speed": 50,
+      "price": 400,
+      "required_level": 5,
+      "durability": 100
+    }
+  },
+  {
+    "model": "equipment.reel",
+    "pk": 3,
+    "fields": {
+      "name": "Мастер Спин",
+      "description": "Профессиональная катушка для крупной рыбы.",
+      "tier": "professional",
+      "gear_ratio": 6.0,
+      "drag_power": 12.0,
+      "line_capacity": 250,
+      "retrieve_speed": 70,
+      "price": 1500,
+      "required_level": 10,
+      "durability": 100
+    }
+  },
+  {
+    "model": "equipment.line",
+    "pk": 1,
+    "fields": {
+      "name": "Леска Стандарт",
+      "description": "Обычная леска для мелкой рыбы.",
+      "tier": "basic",
+      "breaking_strength": 5.0,
+      "visibility": 50,
+      "stretch": 40,
+      "length": 100,
+      "price": 50,
+      "required_level": 1
+    }
+  },
+  {
+    "model": "equipment.line",
+    "pk": 2,
+    "fields": {
+      "name": "Плетёнка Сила",
+      "description": "Прочная плетёная леска.",
+      "tier": "amateur",
+      "breaking_strength": 12.0,
+      "visibility": 30,
+      "stretch": 10,
+      "length": 150,
+      "price": 200,
+      "required_level": 5
+    }
+  },
+  {
+    "model": "equipment.line",
+    "pk": 3,
+    "fields": {
+      "name": "Флюорокарбон Невидимка",
+      "description": "Почти невидимая в воде леска.",
+      "tier": "professional",
+      "breaking_strength": 15.0,
+      "visibility": 10,
+      "stretch": 20,
+      "length": 200,
+      "price": 600,
+      "required_level": 10
+    }
+  },
+  {
+    "model": "equipment.bait",
+    "pk": 1,
+    "fields": {
+      "name": "Червь",
+      "description": "Универсальная живая наживка.",
+      "bait_type": "live",
+      "uses": 10,
+      "attraction_bonus": 10,
+      "price": 20,
+      "required_level": 1,
+      "is_consumable": true
+    }
+  },
+  {
+    "model": "equipment.bait",
+    "pk": 2,
+    "fields": {
+      "name": "Мотыль",
+      "description": "Отличная наживка для карповых.",
+      "bait_type": "live",
+      "uses": 15,
+      "attraction_bonus": 20,
+      "price": 40,
+      "required_level": 3,
+      "is_consumable": true
+    }
+  },
+  {
+    "model": "equipment.bait",
+    "pk": 3,
+    "fields": {
+      "name": "Блесна серебряная",
+      "description": "Искусственная приманка для хищников.",
+      "bait_type": "artificial",
+      "uses": 50,
+      "attraction_bonus": 30,
+      "price": 150,
+      "required_level": 5,
+      "is_consumable": false
+    }
+  },
+  {
+    "model": "equipment.bait",
+    "pk": 4,
+    "fields": {
+      "name": "Воблер Атака",
+      "description": "Воблер для крупных хищников.",
+      "bait_type": "artificial",
+      "uses": 100,
+      "attraction_bonus": 50,
+      "price": 300,
+      "required_level": 8,
+      "is_consumable": false
+    }
+  },
+  {
+    "model": "progression.achievement",
+    "pk": 1,
+    "fields": {
+      "name": "Первый улов",
+      "description": "Поймайте свою первую рыбу.",
+      "achievement_type": "catch_count",
+      "target_value": 1,
+      "reward_money": 100,
+      "reward_experience": 50,
+      "order": 1,
+      "is_hidden": false
+    }
+  },
+  {
+    "model": "progression.achievement",
+    "pk": 2,
+    "fields": {
+      "name": "Рыбак-любитель",
+      "description": "Поймайте 10 рыб.",
+      "achievement_type": "catch_count",
+      "target_value": 10,
+      "reward_money": 300,
+      "reward_experience": 150,
+      "order": 2,
+      "is_hidden": false
+    }
+  },
+  {
+    "model": "progression.achievement",
+    "pk": 3,
+    "fields": {
+      "name": "Опытный рыбак",
+      "description": "Поймайте 50 рыб.",
+      "achievement_type": "catch_count",
+      "target_value": 50,
+      "reward_money": 1000,
+      "reward_experience": 500,
+      "order": 3,
+      "is_hidden": false
+    }
+  },
+  {
+    "model": "progression.achievement",
+    "pk": 4,
+    "fields": {
+      "name": "Редкая добыча",
+      "description": "Поймайте редкую рыбу.",
+      "achievement_type": "catch_rarity",
+      "target_value": 1,
+      "target_rarity": "rare",
+      "reward_money": 500,
+      "reward_experience": 200,
+      "order": 4,
+      "is_hidden": false
+    }
+  },
+  {
+    "model": "progression.achievement",
+    "pk": 5,
+    "fields": {
+      "name": "Легендарный улов",
+      "description": "Поймайте легендарную рыбу.",
+      "achievement_type": "catch_rarity",
+      "target_value": 1,
+      "target_rarity": "legendary",
+      "reward_money": 5000,
+      "reward_experience": 1000,
+      "order": 5,
+      "is_hidden": true
+    }
+  },
+  {
+    "model": "progression.achievement",
+    "pk": 6,
+    "fields": {
+      "name": "Уровень 5",
+      "description": "Достигните 5 уровня.",
+      "achievement_type": "level_reach",
+      "target_value": 5,
+      "reward_money": 500,
+      "reward_experience": 0,
+      "order": 6,
+      "is_hidden": false
+    }
+  },
+  {
+    "model": "progression.achievement",
+    "pk": 7,
+    "fields": {
+      "name": "Уровень 10",
+      "description": "Достигните 10 уровня.",
+      "achievement_type": "level_reach",
+      "target_value": 10,
+      "reward_money": 2000,
+      "reward_experience": 0,
+      "order": 7,
+      "is_hidden": false
+    }
+  }
+]

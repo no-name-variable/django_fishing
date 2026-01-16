@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Базовые стили */
+body {
+  @apply bg-water-dark text-white;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Компоненты игры */
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+    @apply hover:scale-105 active:scale-95;
+  }
+
+  .btn-primary {
+    @apply btn bg-blue-600 hover:bg-blue-700 text-white;
+  }
+
+  .btn-secondary {
+    @apply btn bg-gray-600 hover:bg-gray-700 text-white;
+  }
+
+  .btn-success {
+    @apply btn bg-green-600 hover:bg-green-700 text-white;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-600 hover:bg-red-700 text-white;
+  }
+
+  .card {
+    @apply bg-water-dark/80 backdrop-blur-sm rounded-xl p-4 border border-water/20;
+  }
+
+  .input {
+    @apply w-full px-4 py-2 rounded-lg bg-water-dark/50 border border-water/30;
+    @apply focus:outline-none focus:border-water focus:ring-1 focus:ring-water;
+  }
+
+  /* Цвета редкости */
+  .rarity-common { @apply text-fish-common; }
+  .rarity-uncommon { @apply text-fish-uncommon; }
+  .rarity-rare { @apply text-fish-rare; }
+  .rarity-epic { @apply text-fish-epic; }
+  .rarity-legendary { @apply text-fish-legendary; }
+
+  .rarity-bg-common { @apply bg-fish-common/20 border-fish-common; }
+  .rarity-bg-uncommon { @apply bg-fish-uncommon/20 border-fish-uncommon; }
+  .rarity-bg-rare { @apply bg-fish-rare/20 border-fish-rare; }
+  .rarity-bg-epic { @apply bg-fish-epic/20 border-fish-epic; }
+  .rarity-bg-legendary { @apply bg-fish-legendary/20 border-fish-legendary; }
+}
+
+/* Анимация воды */
+@keyframes wave {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.animate-wave {
+  animation: wave 2s ease-in-out infinite;
+}
+
+/* Индикатор поклёвки */
+@keyframes bite-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.7; }
+}
+
+.animate-bite {
+  animation: bite-pulse 0.3s ease-in-out infinite;
+}
