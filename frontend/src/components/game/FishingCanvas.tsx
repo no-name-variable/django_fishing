@@ -7,8 +7,8 @@ import type { FightState } from '../../types'
 interface Props {
   fishing: {
     gameState: string
-    castDistance: number
-    castDepth: number
+    castDistance?: number
+    castDepth?: number
     fightState: FightState | null
     hookedFish: { name: string; weight: number } | null
   }
@@ -110,7 +110,7 @@ export default function FishingCanvas({ fishing }: Props) {
 // Рисование удочки
 function drawRod(
   ctx: CanvasRenderingContext2D,
-  width: number,
+  _width: number,
   height: number,
   time: number
 ) {
@@ -150,7 +150,7 @@ function drawLine(
   const rodTipY = height - 230
 
   // Позиция поплавка зависит от дистанции
-  const floatX = Math.min(width * 0.7, 200 + fishing.castDistance * 3)
+  const floatX = Math.min(width * 0.7, 200 + (fishing.castDistance || 0) * 3)
   const floatY = 80 + Math.sin(time * 3) * 3
 
   // Леска

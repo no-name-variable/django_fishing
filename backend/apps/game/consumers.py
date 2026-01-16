@@ -262,11 +262,13 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                     # Проверяем завершение
                     result = await self._check_fight_result()
                     if result:
+                        print(f'[DEBUG] Sending catch result: {result}')
                         self.is_fighting = False
                         await self.send_json({
                             'type': 'catch',
                             'result': result
                         })
+                        print('[DEBUG] Catch result sent, breaking loop')
                         break
 
                 except Exception as e:

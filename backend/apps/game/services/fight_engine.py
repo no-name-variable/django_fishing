@@ -237,8 +237,11 @@ class FightEngine:
             )
 
         # Победа - рыба близко и устала (или совсем выдохлась)
-        if (self.session.fish_distance <= 2 and self.session.fish_stamina < 20) or \
-           (self.session.fish_distance <= 5 and self.session.fish_stamina <= 0):
+        win_condition_1 = self.session.fish_distance <= 3 and self.session.fish_stamina < 20
+        win_condition_2 = self.session.fish_stamina <= 0  # Если выносливость 0 - автоматическая победа
+
+        if win_condition_1 or win_condition_2:
+            print(f'[DEBUG] WIN! cond1={win_condition_1}, cond2={win_condition_2}, dist={self.session.fish_distance}, stam={self.session.fish_stamina}')
             duration = 0
             if self.session.fight_start_time:
                 from django.utils import timezone

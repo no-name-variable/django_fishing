@@ -1,11 +1,14 @@
 /**
- * Страница профиля
+ * Страница профиля с подводным дизайном
  */
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
 import { useUserStore } from '../store/userStore'
 import type { Achievement, PlayerStats } from '../types'
 import { clsx } from 'clsx'
+import Card, { CardHeader, CardTitle } from '../components/ui/Card'
+import StatCard, { RarityCard } from '../components/ui/StatCard'
+import ProgressBar from '../components/ui/ProgressBar'
 
 export default function ProfilePage() {
   const { user } = useUserStore()
@@ -61,178 +64,278 @@ export default function ProfilePage() {
   }
 
   if (isLoading || !user) {
-    return <div className="text-center py-12">Загрузка...</div>
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-water-light animate-pulse">Загрузка...</div>
+      </div>
+    )
   }
 
-  // Прогресс опыта
-  const expProgress = (user.experience / user.experienceForNextLevel) * 100
+  const unlockedCount = achievements.filter((a) => a.unlocked).length
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Профиль</h1>
-
-      {/* Основная информация */}
-      <div className="card">
-        <div className="flex items-center gap-6">
-          <div className="w-20 h-20 rounded-full bg-water flex items-center justify-center text-4xl">
-            🎣
-          </div>
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold">{user.username}</h2>
-            <div className="text-gray-400">{user.email}</div>
-            <div className="mt-2 flex items-center gap-4">
-              <div className="text-water-light font-semibold">
-                Уровень {user.level}
-              </div>
-              <div className="text-yellow-400">💰 {user.money}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Прогресс опыта */}
-        <div className="mt-4">
-          <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-400">Опыт</span>
-            <span>
-              {user.experience} / {user.experienceForNextLevel}
-            </span>
-          </div>
-          <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-500 transition-all duration-300"
-              style={{ width: `${expProgress}%` }}
-            />
-          </div>
+      {/* Заголовок */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-white">Профиль</h1>
+        <div className="text-sm text-gray-400">
+          Время в игре: {formatPlayTime(stats?.totalPlayTimeSeconds || 0)}
         </div>
       </div>
 
-      {/* Статистика */}
-      {stats && (
-        <div className="card">
-          <h2 className="text-lg font-semibold mb-4">Статистика</h2>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatBlock label="Забросов" value={stats.totalCasts} />
-            <StatBlock label="Поймано" value={stats.successfulCatches} />
-            <StatBlock label="Сорвалось" value={stats.fishEscaped} />
-            <StatBlock label="Обрывов" value={stats.lineBreaks} />
-            <StatBlock label="Процент улова" value={`${stats.catchRate}%`} />
-            <StatBlock
-              label="Самый большой улов"
-              value={`${user.biggestFishWeight} кг`}
-            />
-            <StatBlock
-              label="Всего поймано"
-              value={`${user.totalFishCaught} шт`}
-            />
-            <StatBlock
-              label="Самый долгий бой"
-              value={formatTime(stats.longestFightSeconds)}
-            />
+      {/* Основной блок профиля */}
+      <Card className="overflow-hidden">
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Аватар и имя */}
+          <div className="flex flex-col items-center md:items-start gap-4">
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-water to-water-dark
+                            flex items-center justify-center text-5xl
+                            ring-4 ring-water/30 shadow-glow">
+                🎣
+              </div>
+              <div className="absolute -bottom-1 -right-1 bg-primary-600 text-white
+                            text-xs font-bold px-2 py-0.5 rounded-full shadow-lg">
+                Ур. {user.level}
+              </div>
+            </div>
+            <div className="text-center md:text-left">
+              <h2 className="text-xl font-bold text-white">{user.username}</h2>
+              <div className="text-sm text-gray-400">{user.email}</div>
+            </div>
           </div>
+
+          {/* Статистика справа */}
+          <div className="flex-1 space-y-4">
+            {/* Опыт */}
+            <div className="bg-water-abyss/30 rounded-xl p-4">
+              <ProgressBar
+                value={user.experience}
+                max={user.experienceForNextLevel}
+                label="Опыт до следующего уровня"
+                color="blue"
+                size="lg"
+              />
+            </div>
+
+            {/* Деньги и основные показатели */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <StatCard
+                icon="💰"
+                label="Баланс"
+                value={user.money.toLocaleString()}
+                color="gold"
+              />
+              <StatCard
+                icon="🐟"
+                label="Всего поймано"
+                value={user.totalFishCaught}
+                color="blue"
+              />
+              <StatCard
+                icon="🏆"
+                label="Рекорд"
+                value={`${user.biggestFishWeight} кг`}
+                color="green"
+              />
+              <StatCard
+                icon="🎯"
+                label="Точность"
+                value={`${stats?.catchRate || 0}%`}
+                color="default"
+              />
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Статистика и редкости */}
+      {stats && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Детальная статистика */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Статистика</CardTitle>
+            </CardHeader>
+
+            <div className="grid grid-cols-2 gap-3">
+              <StatItem label="Забросов" value={stats.totalCasts} icon="🎣" />
+              <StatItem label="Поймано" value={stats.successfulCatches} icon="✅" />
+              <StatItem label="Сорвалось" value={stats.fishEscaped} icon="💨" />
+              <StatItem label="Обрывов" value={stats.lineBreaks} icon="💔" />
+              <StatItem
+                label="Самый долгий бой"
+                value={formatTime(stats.longestFightSeconds)}
+                icon="⏱️"
+              />
+              <StatItem
+                label="Быстрейший улов"
+                value={formatTime(stats.fastestCatchSeconds)}
+                icon="⚡"
+              />
+            </div>
+          </Card>
 
           {/* По редкостям */}
-          <h3 className="text-md font-semibold mt-6 mb-3">По редкости</h3>
-          <div className="grid grid-cols-5 gap-2">
-            <div className="text-center p-2 rounded-lg bg-gray-600/30">
-              <div className="text-2xl font-bold text-fish-common">
-                {stats.commonCaught}
-              </div>
-              <div className="text-xs text-gray-400">Обычные</div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Улов по редкости</CardTitle>
+            </CardHeader>
+
+            <div className="grid grid-cols-5 gap-2">
+              <RarityCard count={stats.commonCaught} label="Обычные" color="#9CA3AF" />
+              <RarityCard count={stats.uncommonCaught} label="Необычные" color="#22C55E" />
+              <RarityCard count={stats.rareCaught} label="Редкие" color="#3B82F6" />
+              <RarityCard count={stats.epicCaught} label="Эпические" color="#A855F7" />
+              <RarityCard count={stats.legendaryCaught} label="Легенд." color="#F97316" />
             </div>
-            <div className="text-center p-2 rounded-lg bg-green-500/20">
-              <div className="text-2xl font-bold text-fish-uncommon">
-                {stats.uncommonCaught}
-              </div>
-              <div className="text-xs text-gray-400">Необычные</div>
+
+            {/* Визуальная шкала редкостей */}
+            <div className="mt-4 h-3 rounded-full overflow-hidden flex">
+              {stats.successfulCatches > 0 && (
+                <>
+                  <div
+                    className="bg-gray-400 h-full"
+                    style={{ width: `${(stats.commonCaught / stats.successfulCatches) * 100}%` }}
+                  />
+                  <div
+                    className="bg-green-500 h-full"
+                    style={{ width: `${(stats.uncommonCaught / stats.successfulCatches) * 100}%` }}
+                  />
+                  <div
+                    className="bg-blue-500 h-full"
+                    style={{ width: `${(stats.rareCaught / stats.successfulCatches) * 100}%` }}
+                  />
+                  <div
+                    className="bg-purple-500 h-full"
+                    style={{ width: `${(stats.epicCaught / stats.successfulCatches) * 100}%` }}
+                  />
+                  <div
+                    className="bg-orange-500 h-full"
+                    style={{ width: `${(stats.legendaryCaught / stats.successfulCatches) * 100}%` }}
+                  />
+                </>
+              )}
+              {stats.successfulCatches === 0 && (
+                <div className="bg-water-abyss/50 h-full w-full" />
+              )}
             </div>
-            <div className="text-center p-2 rounded-lg bg-blue-500/20">
-              <div className="text-2xl font-bold text-fish-rare">
-                {stats.rareCaught}
-              </div>
-              <div className="text-xs text-gray-400">Редкие</div>
-            </div>
-            <div className="text-center p-2 rounded-lg bg-purple-500/20">
-              <div className="text-2xl font-bold text-fish-epic">
-                {stats.epicCaught}
-              </div>
-              <div className="text-xs text-gray-400">Эпические</div>
-            </div>
-            <div className="text-center p-2 rounded-lg bg-orange-500/20">
-              <div className="text-2xl font-bold text-fish-legendary">
-                {stats.legendaryCaught}
-              </div>
-              <div className="text-xs text-gray-400">Легендарные</div>
-            </div>
-          </div>
+          </Card>
         </div>
       )}
 
       {/* Достижения */}
-      <div className="card">
-        <h2 className="text-lg font-semibold mb-4">
-          Достижения ({achievements.filter((a) => a.unlocked).length}/{achievements.length})
-        </h2>
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Достижения
+          </CardTitle>
+          <div className="text-sm text-water-light font-medium">
+            {unlockedCount} / {achievements.length}
+          </div>
+        </CardHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {achievements.map((ach) => (
-            <div
-              key={ach.id}
-              className={clsx(
-                'p-3 rounded-lg border',
-                ach.unlocked
-                  ? 'border-yellow-500/50 bg-yellow-500/10'
-                  : 'border-gray-700 opacity-60'
-              )}
-            >
-              <div className="flex items-start gap-3">
-                <div className="text-2xl">
-                  {ach.unlocked ? '🏆' : '🔒'}
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold">{ach.name}</div>
-                  <div className="text-sm text-gray-400">{ach.description}</div>
+            <AchievementCard key={ach.id} achievement={ach} />
+          ))}
+        </div>
 
-                  {!ach.unlocked && (
-                    <div className="mt-2">
-                      <div className="flex justify-between text-xs mb-1">
-                        <span>{ach.progress}</span>
-                        <span>{ach.target}</span>
-                      </div>
-                      <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-water"
-                          style={{
-                            width: `${Math.min(100, (ach.progress / ach.target) * 100)}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
+        {achievements.length === 0 && (
+          <div className="text-center py-8 text-gray-400">
+            Достижения пока не загружены
+          </div>
+        )}
+      </Card>
+    </div>
+  )
+}
 
-                  <div className="mt-2 flex gap-2 text-xs">
-                    {ach.rewardMoney > 0 && (
-                      <span className="text-yellow-400">💰 +{ach.rewardMoney}</span>
-                    )}
-                    {ach.rewardExperience > 0 && (
-                      <span className="text-blue-400">⭐ +{ach.rewardExperience}</span>
-                    )}
-                  </div>
-                </div>
+// Компонент достижения
+function AchievementCard({ achievement: ach }: { achievement: Achievement }) {
+  const progress = ach.target > 0 ? (ach.progress / ach.target) * 100 : 0
+
+  return (
+    <div
+      className={clsx(
+        'p-4 rounded-xl border transition-all duration-300',
+        ach.unlocked
+          ? 'bg-gradient-to-br from-amber-900/30 to-amber-950/20 border-amber-500/30 shadow-glow-sm'
+          : 'bg-water-dark/30 border-water/10 opacity-70 hover:opacity-100'
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div className={clsx(
+          'text-3xl p-2 rounded-lg',
+          ach.unlocked ? 'bg-amber-500/20' : 'bg-water-abyss/30'
+        )}>
+          {ach.unlocked ? '🏆' : '🔒'}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className={clsx(
+            'font-semibold truncate',
+            ach.unlocked ? 'text-amber-200' : 'text-gray-300'
+          )}>
+            {ach.name}
+          </div>
+          <div className="text-sm text-gray-400 line-clamp-2">
+            {ach.description}
+          </div>
+
+          {!ach.unlocked && ach.target > 0 && (
+            <div className="mt-2">
+              <div className="flex justify-between text-xs text-gray-500 mb-1">
+                <span>{ach.progress}</span>
+                <span>{ach.target}</span>
+              </div>
+              <div className="h-1.5 bg-water-abyss/50 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-water-light/70 rounded-full transition-all"
+                  style={{ width: `${Math.min(100, progress)}%` }}
+                />
               </div>
             </div>
-          ))}
+          )}
+
+          {(ach.rewardMoney > 0 || ach.rewardExperience > 0) && (
+            <div className="mt-2 flex gap-3 text-xs">
+              {ach.rewardMoney > 0 && (
+                <span className="text-amber-400 flex items-center gap-1">
+                  <span>💰</span>
+                  <span>+{ach.rewardMoney}</span>
+                </span>
+              )}
+              {ach.rewardExperience > 0 && (
+                <span className="text-blue-400 flex items-center gap-1">
+                  <span>⭐</span>
+                  <span>+{ach.rewardExperience}</span>
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
   )
 }
 
-function StatBlock({ label, value }: { label: string; value: string | number }) {
+// Элемент статистики
+function StatItem({
+  label,
+  value,
+  icon
+}: {
+  label: string
+  value: string | number
+  icon: string
+}) {
   return (
-    <div className="bg-water-dark/50 rounded-lg p-3 text-center">
-      <div className="text-2xl font-bold">{value}</div>
-      <div className="text-sm text-gray-400">{label}</div>
+    <div className="flex items-center gap-3 p-3 rounded-lg bg-water-abyss/20">
+      <span className="text-xl">{icon}</span>
+      <div>
+        <div className="text-lg font-semibold text-white">{value}</div>
+        <div className="text-xs text-gray-400">{label}</div>
+      </div>
     </div>
   )
 }
@@ -245,4 +348,14 @@ function formatTime(seconds: number): string {
     return `${mins}м ${secs}с`
   }
   return `${secs}с`
+}
+
+function formatPlayTime(seconds: number): string {
+  if (seconds === 0) return '0ч'
+  const hours = Math.floor(seconds / 3600)
+  const mins = Math.floor((seconds % 3600) / 60)
+  if (hours > 0) {
+    return `${hours}ч ${mins}м`
+  }
+  return `${mins}м`
 }
