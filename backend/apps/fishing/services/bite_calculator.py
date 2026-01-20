@@ -71,7 +71,7 @@ class BiteCalculator:
         # Determine if any fish bites
         total_probability = sum(p for _, p in fish_probabilities)
 
-        if random.random() > min(total_probability, 0.8):
+        if random.random() >= min(total_probability, 0.8):
             return BiteResult(
                 will_bite=False,
                 wait_time=random.uniform(15, 45)
@@ -137,7 +137,7 @@ class BiteCalculator:
         cumulative = 0
         for fish, prob in fish_probabilities:
             cumulative += prob
-            if r <= cumulative:
+            if r < cumulative:  # Исправлено: < вместо <= для устранения bias
                 return fish
         return fish_probabilities[-1][0]
 

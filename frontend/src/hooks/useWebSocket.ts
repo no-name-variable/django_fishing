@@ -6,7 +6,11 @@ import { useGameStore } from '../store/gameStore'
 import { useUserStore } from '../store/userStore'
 import type { FightState } from '../types'
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws'
+// Используем относительный путь для работы с прокси Vite в разработке
+// В продакшене nginx будет проксировать запросы
+const WS_PROTOCOL = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+const WS_HOST = `${WS_PROTOCOL}//${window.location.host}`
+const WS_URL = import.meta.env.VITE_WS_URL || `${WS_HOST}/ws`
 
 export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null)
@@ -118,7 +122,8 @@ export function useWebSocket() {
 
         case 'catch': {
           const result = data.result as Record<string, unknown>
-          setCatchResult({
+
+          const catchResult = {
             success: result.success as boolean,
             fishName: result.fish_name as string,
             weight: result.weight as number,
@@ -128,7 +133,9 @@ export function useWebSocket() {
             newLevel: result.new_level as number,
             achievements: result.achievements as string[],
             reason: result.reason as string,
-          })
+          }
+
+          setCatchResult(catchResult)
 
           // Обновляем локальное состояние пользователя
           if (result.success) {
@@ -137,6 +144,15 @@ export function useWebSocket() {
           }
           break
         }
+
+        case 'bite_timeout':
+          console.log('Bite timeout:', data.message)
+          // Сбрасываем состояние поклевки
+          setGameState('waiting')
+          setError(data.message as string)
+          // Очищаем ошибку через 3 секунды
+          setTimeout(() => setError(null), 3000)
+          break
 
         case 'error':
           console.error('Ошибка от сервера:', data.message)

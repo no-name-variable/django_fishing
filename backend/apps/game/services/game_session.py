@@ -132,6 +132,7 @@ class GameSessionService:
         session.cast_distance = distance
         session.cast_depth = depth
         session.state = GameState.WAITING
+        session.next_bite_check_time = None  # Сбрасываем время проверки
         session.save()
 
         return CastResult(success=True, distance=distance, depth=depth)
@@ -169,6 +170,7 @@ class GameSessionService:
             True если рыба подсечена
         """
         session = self.get_session()
+
         if not session or session.state != GameState.WAITING:
             return False
 
@@ -179,9 +181,11 @@ class GameSessionService:
         weight = bite.fish.generate_weight()
 
         # Обновляем сессию
+        from django.utils import timezone
         session.state = GameState.BITE
         session.hooked_fish = bite.fish
         session.hooked_fish_weight = weight
+        session.bite_time = timezone.now()  # Запоминаем время поклевки
         session.save()
 
         return True
@@ -198,6 +202,24 @@ class GameSessionService:
         if not session or session.state != GameState.BITE:
             return False
 
+        # Проверяем таймаут поклевки (8 секунд)
+        from django.utils import timezone
+        from datetime import timedelta
+        BITE_TIMEOUT = 8  # секунд
+
+        if session.bite_time:
+            elapsed = (timezone.now() - session.bite_time).total_seconds()
+
+            if elapsed > BITE_TIMEOUT:
+                # Таймаут - рыба ушла
+                session.state = GameState.WAITING
+                session.hooked_fish = None
+                session.hooked_fish_weight = 0
+                session.bite_time = None
+                session.next_bite_check_time = timezone.now() + timedelta(seconds=10)
+                session.save()
+                return False
+
         # Инициализируем параметры вываживания
         session.state = GameState.FIGHTING
         session.fish_state = FishState.ACTIVE
@@ -208,6 +230,7 @@ class GameSessionService:
         session.line_health = 100
         session.drag_level = 0.5
         session.fight_start_time = timezone.now()
+        session.bite_time = None  # Очищаем время поклевки
         session.save()
 
         return True

@@ -136,6 +136,7 @@ class InventoryService:
         except PlayerEquipment.DoesNotExist:
             return None
 
+    @transaction.atomic
     def consume_bait(self) -> bool:
         """
         Использовать одну единицу наживки.
@@ -144,12 +145,29 @@ class InventoryService:
         Returns:
             bool: True если наживка ещё есть, False если закончилась
         """
-        equipment = self.get_equipment()
-        if not equipment or not equipment.bait:
+        from django.db.models import F
+
+        try:
+            # Блокируем equipment для предотвращения race conditions
+            equipment = PlayerEquipment.objects.select_for_update().get(player=self.user)
+        except PlayerEquipment.DoesNotExist:
             return False
 
-        bait_item = equipment.bait
-        bait_item.quantity -= 1
+        if not equipment.bait:
+            return False
+
+        # Блокируем bait_item для обновления
+        bait_item = InventoryItem.objects.select_for_update().get(pk=equipment.bait.pk)
+
+        if bait_item.quantity <= 0:
+            return False
+
+        # Атомарное уменьшение количества
+        bait_item.quantity = F('quantity') - 1
+        bait_item.save()
+
+        # Обновляем объект чтобы получить новое значение
+        bait_item.refresh_from_db()
 
         if bait_item.quantity <= 0:
             # Наживка закончилась
@@ -158,5 +176,4 @@ class InventoryService:
             bait_item.delete()
             return False
 
-        bait_item.save()
         return True

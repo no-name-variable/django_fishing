@@ -57,6 +57,11 @@ class GameSession(models.Model):
         default=0,
         verbose_name='Глубина (м)'
     )
+    next_bite_check_time = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Время следующей проверки поклёвки'
+    )
 
     # Данные о пойманной рыбе (заполняются при поклёвке)
     hooked_fish = models.ForeignKey(
@@ -106,11 +111,23 @@ class GameSession(models.Model):
     )
 
     # Время
+    bite_time = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Время поклевки'
+    )
     fight_start_time = models.DateTimeField(
         null=True,
         blank=True,
         verbose_name='Начало вываживания'
     )
+
+    # Optimistic locking для предотвращения race conditions
+    version = models.IntegerField(
+        default=0,
+        verbose_name='Версия (для optimistic locking)'
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

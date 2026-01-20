@@ -60,6 +60,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             await self.close(code=4001)
             return
 
+        # Закрываем старую сессию если она есть (предотвращаем множественные подключения)
+        await self._close_old_sessions()
+
         await self.accept()
         await self.send_json({
             'type': 'connected',
@@ -69,12 +72,21 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def disconnect(self, close_code):
         """Отключение клиента."""
         # Останавливаем игровой цикл
-        if self.game_loop_task:
-            self.game_loop_task.cancel()
+        await self._cancel_game_loop()
 
         # Закрываем сессию
         if self.user:
             await self._close_session()
+
+    async def _cancel_game_loop(self):
+        """Отменить текущую задачу игрового цикла."""
+        if self.game_loop_task:
+            self.game_loop_task.cancel()
+            try:
+                await self.game_loop_task
+            except asyncio.CancelledError:
+                pass
+            self.game_loop_task = None
 
     async def receive_json(self, content):
         """Обработка входящих сообщений."""
@@ -143,6 +155,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                 'depth': result.data.depth
             })
             # Запускаем цикл ожидания поклёвки
+            await self._cancel_game_loop()
             self.game_loop_task = asyncio.create_task(self._bite_loop())
         else:
             await self.send_json({
@@ -165,8 +178,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                 'weight': result.data.weight
             })
             # Запускаем цикл вываживания
-            if self.game_loop_task:
-                self.game_loop_task.cancel()
+            await self._cancel_game_loop()
             self.game_loop_task = asyncio.create_task(self._fight_loop())
         else:
             await self.send_json({
@@ -203,10 +215,29 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         )
 
         if not result.success:
+            # Игнорируем ошибку "Нет активного вываживания" - бой уже закончен
+            if 'Нет активного вываживания' in result.error:
+                return
+
             await self.send_json({
                 'type': 'error',
                 'message': result.error
             })
+            return
+
+        # ВАЖНО: Проверяем завершение боя в результате действия
+        if result.data.finished and result.data.result:
+            self.is_fighting = False
+
+            # Отправляем результат клиенту
+            await self.send_json({
+                'type': 'catch',
+                'result': result.data.result
+            })
+
+            # Останавливаем цикл вываживания
+            if self.game_loop_task:
+                self.game_loop_task.cancel()
 
     async def _bite_loop(self):
         """Цикл ожидания поклёвки."""
@@ -226,7 +257,30 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                         'fish': result.data.fish_name,
                         'intensity': result.data.intensity
                     })
+                    # Запускаем таймер таймаута поклевки
+                    await self._cancel_game_loop()
+                    self.game_loop_task = asyncio.create_task(self._bite_timeout_check())
                     return  # Выходим из цикла, ждём подсечку
+
+        except asyncio.CancelledError:
+            pass
+
+    async def _bite_timeout_check(self):
+        """Проверка таймаута поклевки (работает после отправки bite сообщения)."""
+        try:
+            await asyncio.sleep(8)  # Ждем 8 секунд
+
+            # Проверяем не подсек ли игрок за это время
+            timeout_result = await self._check_bite_timeout()
+            if timeout_result:
+                # Рыба ушла - уведомляем клиента
+                await self.send_json({
+                    'type': 'bite_timeout',
+                    'message': 'Рыба ушла! Слишком долго тянули с подсечкой'
+                })
+                # Перезапускаем цикл ожидания поклевки
+                await self._cancel_game_loop()
+                self.game_loop_task = asyncio.create_task(self._bite_loop())
 
         except asyncio.CancelledError:
             pass
@@ -238,6 +292,16 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                 await asyncio.sleep(0.1)  # 10 обновлений в секунду
 
                 try:
+                    # СНАЧАЛА проверяем завершение (перед получением state)
+                    result = await self._check_fight_result()
+                    if result:
+                        self.is_fighting = False
+                        await self.send_json({
+                            'type': 'catch',
+                            'result': result
+                        })
+                        break
+
                     # Получаем текущее состояние
                     state = await self._get_fight_state()
                     if not state:
@@ -258,18 +322,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                             'is_critical': state.is_critical,
                         }
                     })
-
-                    # Проверяем завершение
-                    result = await self._check_fight_result()
-                    if result:
-                        print(f'[DEBUG] Sending catch result: {result}')
-                        self.is_fighting = False
-                        await self.send_json({
-                            'type': 'catch',
-                            'result': result
-                        })
-                        print('[DEBUG] Catch result sent, breaking loop')
-                        break
 
                 except Exception as e:
                     print(f'Ошибка в fight_loop: {e}')
@@ -302,6 +354,13 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             return 'Неизвестная локация'
 
     @database_sync_to_async
+    def _close_old_sessions(self):
+        """Закрыть старые сессии пользователя."""
+        from apps.game.models import GameSession
+        # Удаляем старую сессию (будет создана новая при join)
+        GameSession.objects.filter(player=self.user).delete()
+
+    @database_sync_to_async
     def _close_session(self):
         """Закрыть игровую сессию."""
         service = GameSessionService(self.user)
@@ -315,26 +374,50 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         return session_state.fight if session_state else None
 
     @database_sync_to_async
+    def _check_bite_timeout(self):
+        """Проверить таймаут поклевки."""
+        from datetime import timedelta
+        from django.utils import timezone
+
+        service = GameSessionService(self.user)
+        session = service.get_session()
+
+        if not session or session.state != GameState.BITE:
+            return False
+
+        if not session.bite_time:
+            return False
+
+        BITE_TIMEOUT = 8  # секунд
+        elapsed = (timezone.now() - session.bite_time).total_seconds()
+
+        if elapsed > BITE_TIMEOUT:
+            # Сбрасываем состояние
+            session.state = GameState.WAITING
+            session.hooked_fish = None
+            session.hooked_fish_weight = 0
+            session.bite_time = None
+            session.next_bite_check_time = timezone.now() + timedelta(seconds=10)
+            session.save()
+            return True
+
+        return False
+
+    @database_sync_to_async
     def _check_fight_result(self):
         """Проверить результат вываживания."""
         try:
             service = GameSessionService(self.user)
             engine = service.get_fight_engine()
             if not engine:
-                print(f'[DEBUG] No fight engine for user {self.user}')
                 return None
 
             state, result = engine.update(0.1)
 
-            # Логируем состояние для отладки
-            session = service.get_session()
-            if session and session.fish_stamina <= 5:
-                print(f'[DEBUG] Low stamina! stamina={session.fish_stamina}, distance={session.fish_distance}')
-
             if result:
-                print(f'[DEBUG] Fight result: success={result.success}, reason={result.reason}')
                 catch_result = service.complete_catch(result)
-                print(f'[DEBUG] Catch result: {catch_result}')
+                if not catch_result:
+                    return None
                 return catch_result
             return None
         except Exception as e:

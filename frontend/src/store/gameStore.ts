@@ -31,6 +31,7 @@ interface GameStore {
   setFightStarted: (fishName: string, weight: number) => void
   updateFightState: (state: FightState) => void
   setCatchResult: (result: CatchResult) => void
+  clearCatchResult: () => void
   setError: (error: string | null) => void
   reset: () => void
 }
@@ -84,6 +85,8 @@ export const useGameStore = create<GameStore>((set) => ({
       fightState: null,
       hookedFish: null,
     }),
+
+  clearCatchResult: () => set({ lastCatchResult: null }),
 
   setError: (error) => set({ error }),
 

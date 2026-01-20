@@ -49,18 +49,8 @@ class FightFishUseCase(UseCase[FightFishInput, FightFishOutput]):
         # Обрабатываем действие
         state = engine.process_action(action, input_data.value)
 
-        # Обновляем состояние (тик игры)
-        state, fight_result = engine.update(delta_time=0.1)
-
-        # Проверяем завершение
-        if fight_result:
-            result = service.complete_catch(fight_result)
-            return UseCaseResult.ok(FightFishOutput(
-                state=state,
-                finished=True,
-                result=result
-            ))
-
+        # Состояние будет обновлено в _fight_loop() в consumers.py
+        # Убран двойной вызов update() для исправления скорости симуляции
         return UseCaseResult.ok(FightFishOutput(
             state=state,
             finished=False

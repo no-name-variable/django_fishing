@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react'
 import { useFishing } from '../hooks/useFishing'
 import { useInventoryStore } from '../store/inventoryStore'
+import { useGameStore } from '../store/gameStore'
 import { api } from '../api/client'
 import type { Location } from '../types'
 import FishingCanvas from '../components/game/FishingCanvas'
@@ -16,6 +17,7 @@ import { clsx } from 'clsx'
 export default function GamePage() {
   const fishing = useFishing()
   const { equipment, fetchEquipment } = useInventoryStore()
+  const { clearCatchResult } = useGameStore()
   const [locations, setLocations] = useState<Location[]>([])
   const [selectedLocation, setSelectedLocation] = useState<number | null>(null)
 
@@ -193,7 +195,7 @@ export default function GamePage() {
         {fishing.lastCatchResult && (
           <CatchResult
             result={fishing.lastCatchResult}
-            onClose={() => {}}
+            onClose={clearCatchResult}
           />
         )}
       </div>

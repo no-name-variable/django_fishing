@@ -57,9 +57,9 @@ class FightEngine:
     """
 
     # Константы игровой механики
-    TENSION_PER_REEL = 5        # Натяжение при подмотке
-    TENSION_DECAY = 2           # Спад натяжения в секунду
-    DISTANCE_PER_REEL = 0.5     # Метры за тик подмотки
+    TENSION_PER_REEL = 2        # Натяжение при подмотке (снижено с 5 для баланса)
+    TENSION_DECAY = 5           # Спад натяжения в секунду (увеличено с 2)
+    DISTANCE_PER_REEL = 1.0     # Метры за тик подмотки (увеличено с 0.5)
     DISTANCE_PER_RUSH = 2       # Метры за тик рывка рыбы
     LINE_DAMAGE_THRESHOLD = 80  # Порог натяжения для износа
     CRITICAL_TENSION = 90       # Критическое натяжение
@@ -120,10 +120,7 @@ class FightEngine:
         self._apply_fish_behavior(behavior, delta_time)
 
         # Естественное снижение натяжения
-        self.session.line_tension = max(
-            0,
-            self.session.line_tension - self.TENSION_DECAY * delta_time
-        )
+        self._set_tension(self.session.line_tension - self.TENSION_DECAY * delta_time)
 
         # Проверяем износ лески
         if self.session.line_tension > self.LINE_DAMAGE_THRESHOLD:
@@ -155,10 +152,7 @@ class FightEngine:
         }.get(fish_state, 1.0)
 
         tension_increase = self.TENSION_PER_REEL * effective_speed * tension_multiplier
-        self.session.line_tension = min(
-            self.MAX_TENSION,
-            self.session.line_tension + tension_increase
-        )
+        self._set_tension(self.session.line_tension + tension_increase)
 
         # Рыба теряет больше выносливости при подмотке
         self.session.fish_stamina = max(
@@ -169,7 +163,7 @@ class FightEngine:
     def _process_release(self) -> None:
         """Обработка стравливания лески."""
         # Резко снижаем натяжение
-        self.session.line_tension = max(0, self.session.line_tension - 20)
+        self._set_tension(self.session.line_tension - 20)
         # Рыба отплывает
         self.session.fish_distance += 1
 
@@ -193,12 +187,11 @@ class FightEngine:
         while self.session.fish_direction < -180:
             self.session.fish_direction += 360
 
-        # Рыба тянет леску - увеличиваем натяжение и дистанцию
-        pull_effect = behavior.pull_force * self.session.drag_level
-        self.session.line_tension = min(
-            self.MAX_TENSION,
-            self.session.line_tension + pull_effect * delta_time * 0.5
-        )
+        # Рыба тянет леску - натяжение зависит от фрикциона
+        # Высокий drag = леска стравливается медленнее = больше натяжение
+        # Низкий drag = леска стравливается легко = меньше натяжение
+        pull_effect = behavior.pull_force * (1 - self.session.drag_level * 0.7)
+        self._set_tension(self.session.line_tension + pull_effect * delta_time * 0.5)
 
         # При рывке рыба отплывает
         if behavior.new_state == FishState.RUSH:
@@ -206,7 +199,7 @@ class FightEngine:
 
         # Расход выносливости рыбы
         stamina_drain = behavior.stamina_drain * delta_time
-        # Высокий фрикцион утомляет рыбу быстрее
+        # Высокий фрикцион утомляет рыбу быстрее (она борется с сопротивлением)
         stamina_drain *= (1 + self.session.drag_level * 0.5)
         # Мощность удилища ускоряет утомление
         stamina_drain *= (1 + self.rod.power / 200)
@@ -241,7 +234,6 @@ class FightEngine:
         win_condition_2 = self.session.fish_stamina <= 0  # Если выносливость 0 - автоматическая победа
 
         if win_condition_1 or win_condition_2:
-            print(f'[DEBUG] WIN! cond1={win_condition_1}, cond2={win_condition_2}, dist={self.session.fish_distance}, stam={self.session.fish_stamina}')
             duration = 0
             if self.session.fight_start_time:
                 from django.utils import timezone
@@ -268,6 +260,13 @@ class FightEngine:
             )
 
         return None
+
+    def _set_tension(self, value: float) -> None:
+        """
+        Установить натяжение с автоматической проверкой лимитов.
+        Гарантирует, что натяжение никогда не выйдет за пределы [0, MAX_TENSION].
+        """
+        self.session.line_tension = min(self.MAX_TENSION, max(0, value))
 
     def _get_state(self) -> FightState:
         """Получить текущее состояние для отправки клиенту."""
